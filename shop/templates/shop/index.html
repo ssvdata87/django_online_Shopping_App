@@ -1,0 +1,49 @@
+{% extends 'shop/layouts/main.html' %}
+{% block title %}
+
+ShopCart | OnlineShoping
+{% endblock title %}
+
+{% block content %}
+
+{% include 'shop/inc/slider.html' %}
+
+<!-- <h1 style="color: mediumseagreen; font-size: 100px; text-align: center;"><marquee behavior="scroll" direction="left">Tamizhini</marquee></h1> -->
+
+<div class="container" style="margin-top: 70px;">
+    <body>
+        <div class="row">
+            <div class="col-12">
+                <h1>Latest Offers</h1>
+
+            </div>
+            {% for item in products %}
+            <div class="col-md-4 col-lg-3">
+                <div class="card my-3">
+                    <a href="{% url 'product_details' item.category.name item.name %}">
+                    <img src="{{item.product_image.url}}"  class="card-image-top" alt="Categories" width="300px" height="300px">
+                   
+                   
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">{{item.name}}</h5>
+                        <p class="card-text">
+                            <span class="float-start old_price"><s>Rs. {{item.selling_price | stringformat:'d'}}</s></span>
+                            <span class="float-end new_price">Rs.{{item.orginal_price | stringformat:'d'}}</span>
+                            
+                           
+                        </p>
+                   
+                        
+                        
+                    </div>
+                    </a>
+                </div>
+            </div>
+
+            {% endfor %}
+        </div>
+    </body>
+      
+</div>
+
+{% endblock content %}

@@ -1,0 +1,172 @@
+{% extends 'shop/layouts/main.html' %}
+
+{% block title %}
+
+Cart | OnlineShoping
+{% endblock title %}
+
+{% block content %}
+
+
+<section class="bg-light py-4 my-5">
+    <div class="container">
+      
+            <div class="col-sm-6" style="max-width: 300px;">
+                <h4 class="mb-3">Cart Items</h4>
+                <hr style="border-color:#b8bfc2;">
+            </div>
+            {% if cart %}
+           
+            <table class="table table-bordered">
+               
+                <tr>
+                    <th>Image</th>
+                    <th>Product Name</th>
+                    <th>Unit</th>
+                    <th>Quantity</th>
+                    <th>Amount</th>
+                    <th>Remove</th>
+                </tr>
+              
+    
+                {% for item in cart %}
+               <tr>
+                  <td><img src="{{item.product.product_image.url}}" height="100px" alt="{{item.product.name}}"></td>
+                  <td>{{item.product.name}}</td>
+                  <td>{{item.product.selling_price | stringformat:'d'}}</td>
+                  <td>
+                    <div class="input-group" style="width:150px">
+                        <button class="input-group-text bg-white text-dark btnMinus" data-item-id="{{ item.id }}"><i class="fa fa-minus"></i></button>
+                        <input type="text" name="qty" data-item-id="{{ item.id }}" value="{{ item.product_qty }}" class="form-control text-center">
+                        <button class="input-group-text bg-white text-dark btnPlus" data-item-id="{{ item.id }}"><i class="fa fa-plus"></i></button>
+                    </div>
+                   </td>
+                  <td class="amt">{{item.total_cost | stringformat:'d'}}</td>
+                  <td><a href="{% url 'remove_cart' item.id %}"  onclick="return confirm('Are you sure? to Remove')" 
+                     class="btn btn-danger btn-sm"><i class="fa fa-trash"></i> Remove</a></td>
+                
+                  
+                </tr>
+                {% endfor %}
+                <tr>
+                  <td></td>
+                  <td></td>
+                  <td colspan="2"><b>Total Amount</b></td>
+                  <th id="net">0</th>
+                  <td><a href="{% url 'orders' %}"><button class="btn btn-primary btn-sm">
+                    <i class="fa fa-check-circle"></i> Check Out
+                  </button></a></td>
+                </tr>
+                </div>
+               
+            </table>
+          
+            {% else %}
+            <p>No items available in the Cart.</p>
+            {% endif %}
+           
+       
+    </div>
+
+</section>
+<script>
+    function updateTotalAmount() {
+        const netAmountElement = document.getElementById('net');
+        const nodes = document.querySelectorAll('.amt');
+        const arr = Array.from(nodes);
+        const res = arr.reduce((acc, curr) => {
+            return acc + Number(curr.textContent.replace('Rs : ', ''));
+        }, 0);
+ 
+        netAmountElement.innerHTML = "Rs : " + res.toFixed(2);
+    }
+ 
+    document.addEventListener('DOMContentLoaded', function () {
+        const quantityInputs = document.querySelectorAll('input[name="qty"]');
+ 
+        updateTotalAmount();
+ 
+        quantityInputs.forEach(function (input) {
+            const btnMinus = input.parentElement.querySelector('.btnMinus');
+            const btnPlus = input.parentElement.querySelector('.btnPlus');
+ 
+            btnMinus.addEventListener('click', function () {
+                updateQuantity(input, -1);
+            });
+ 
+            btnPlus.addEventListener('click', function () {
+                updateQuantity(input, 1);
+            });
+        });
+ 
+        function updateQuantity(input, amount) {
+            let currentQuantity = parseInt(input.value);
+            if (!isNaN(currentQuantity)) {
+                currentQuantity += amount;
+                if (currentQuantity < 1) {
+                    currentQuantity = 1;
+                }
+                input.value = currentQuantity;
+ 
+                // Update the cart quantity using AJAX
+                const itemId = input.dataset.itemId;
+                updateCartQuantity(itemId, currentQuantity);
+ 
+                updateProductAmount(input);
+                updateTotalAmount();
+            }
+        }
+ 
+    function updateCartQuantity(itemId, newQuantity) {
+    const url = '{% url "update_cart_quantity" %}';
+    const csrfToken = '{{ csrf_token }}';
+
+    fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify({
+            'item_id': itemId,
+            'new_quantity': newQuantity
+        }),
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Update successful', data);
+        // You can handle success here
+    })
+    .catch(error => {
+        console.error('Error during fetch:', error);
+        // You can handle the error here
+    });
+}
+
+
+ 
+        function updateProductAmount(input) {
+            const productRow = input.closest('tr');
+            const unitPrice = parseFloat(productRow.querySelector('td:nth-child(3)').textContent.replace('Rs : ', ''));
+            const quantity = parseInt(input.value);
+            const amountElement = productRow.querySelector('.amt');
+ 
+            const totalAmount = unitPrice * quantity;
+            amountElement.textContent = "Rs : " + totalAmount.toFixed(2);
+        }
+    });
+ </script>
+ 
+
+
+
+
+{% endblock %}
